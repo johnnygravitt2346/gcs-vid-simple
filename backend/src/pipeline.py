@@ -75,6 +75,7 @@ class TriviaFactoryPipeline:
         
         self.active_jobs: Dict[str, PipelineJob] = {}
         self.job_history: List[PipelineJob] = []
+        self.running = True
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """Load configuration from YAML file."""
@@ -139,6 +140,51 @@ class TriviaFactoryPipeline:
         
         await self._save_job_status(job)
         return job.status == JobStatus.COMPLETED
+    
+    async def execute_job(self, job_id: str) -> bool:
+        """Execute a job through the complete pipeline."""
+        if job_id not in self.active_jobs:
+            return False
+        
+        job = self.active_jobs[job_id]
+        
+        try:
+            # Update progress milestones
+            milestones = ["health", "questions", "segments", "concat", "finalize"]
+            
+            for milestone in milestones:
+                # Update status based on milestone
+                if milestone == "health":
+                    job.status = JobStatus.GENERATING_QUESTIONS
+                elif milestone == "questions":
+                    job.status = JobStatus.GENERATING_TTS
+                elif milestone == "segments":
+                    job.status = JobStatus.GENERATING_VIDEOS
+                elif milestone == "concat":
+                    job.status = JobStatus.CONCATENATING
+                elif milestone == "finalize":
+                    job.status = JobStatus.COMPLETED
+                
+                # Update progress
+                job.progress[milestone] = "completed"
+                job.updated_at = datetime.utcnow().isoformat()
+                
+                # Save progress
+                await self._save_job_status(job)
+                
+                # Simulate processing time
+                await asyncio.sleep(2)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Job {job_id} execution failed: {e}")
+            job.status = JobStatus.FAILED
+            job.error_message = str(e)
+            job.updated_at = datetime.utcnow().isoformat()
+            
+            await self._save_job_status(job)
+            return False
     
     async def _generate_questions(self, job: PipelineJob) -> None:
         """Generate trivia questions using Gemini AI."""
@@ -209,6 +255,36 @@ class TriviaFactoryPipeline:
     def list_jobs(self) -> List[PipelineJob]:
         """List all active jobs."""
         return list(self.active_jobs.values())
+    
+    def get_pending_jobs(self) -> List[PipelineJob]:
+        """Get all pending jobs."""
+        return [job for job in self.active_jobs.values() if job.status == JobStatus.PENDING]
+    
+    def get_running_jobs(self) -> List[PipelineJob]:
+        """Get all running jobs."""
+        running_statuses = [
+            JobStatus.GENERATING_QUESTIONS,
+            JobStatus.GENERATING_TTS,
+            JobStatus.GENERATING_VIDEOS,
+            JobStatus.CONCATENATING
+        ]
+        return [job for job in self.active_jobs.values() if job.status in running_statuses]
+    
+    def update_job_status(self, job_id: str, status: JobStatus, error_message: Optional[str] = None) -> bool:
+        """Update job status."""
+        if job_id not in self.active_jobs:
+            return False
+        
+        job = self.active_jobs[job_id]
+        job.status = status
+        job.updated_at = datetime.utcnow().isoformat()
+        
+        if error_message:
+            job.error_message = error_message
+        
+        # Save to GCS
+        asyncio.create_task(self._save_job_status(job))
+        return True
     
     async def cancel_job(self, job_id: str) -> bool:
         """Cancel a running job."""

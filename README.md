@@ -127,6 +127,12 @@ trivia-factory/
 
 ## 🧪 Testing
 
+### First Test Topology
+**First test = API + Worker + UI on the same VM; browser connects to VM ports directly.**
+
+- **Operator (your laptop / Cursor):** Open browser to the VM's UI; click buttons, view status
+- **Compute (DEV GPU VM – preemptible T4):** Run **FastAPI (backend)**, **worker**, and **Streamlit UI** on the **same VM**. All rendering happens here. All artifacts go to **GCS**
+
 ### Local Development
 ```bash
 # Start the UI locally
