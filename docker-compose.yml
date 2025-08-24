@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp_service_account.json
+      - GOOGLE_CLOUD_PROJECT=mythic-groove-469801-b7
+      - GOOGLE_CLOUD_REGION=us-central1
+      - GCS_BUCKET_NAME=trivia-factory-prod
+      - ASSETS_DIR=/app/assets
+      - TESTING_MODE=1
+    volumes:
+      - ./backend:/app
+      - ./gcp_service_account.json:/app/gcp_service_account.json:ro
+      - ./assets:/app/assets:ro
+    depends_on:
+      - redis
+    networks:
+      - trivia-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_ENVIRONMENT=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - trivia-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - trivia-network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp_service_account.json
+      - GOOGLE_CLOUD_PROJECT=mythic-groove-469801-b7
+      - GOOGLE_CLOUD_REGION=us-central1
+      - GCS_BUCKET_NAME=trivia-factory-prod
+      - ASSETS_DIR=/app/assets
+      - WORKER_MODE=1
+    volumes:
+      - ./backend:/app
+      - ./gcp_service_account.json:/app/gcp_service_account.json:ro
+      - ./assets:/app/assets:ro
+    depends_on:
+      - redis
+    networks:
+      - trivia-network
+    deploy:
+      replicas: 2
+
+volumes:
+  redis_data:
+
+networks:
+  trivia-network:
+    driver: bridge
