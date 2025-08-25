@@ -4,6 +4,7 @@ google-cloud-texttospeech>=2.16.0
 google-cloud-aiplatform>=1.38.0
 google-auth>=2.23.0
 google-api-python-client>=2.100.0
+google-generativeai>=0.3.0
 
 # Video processing
 opencv-python>=4.8.0

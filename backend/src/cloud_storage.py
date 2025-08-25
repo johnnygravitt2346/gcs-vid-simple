@@ -169,6 +169,20 @@ class CloudStorage:
         self.write_text_to_gcs(placeholder_content, placeholder_uri, context)
         return gcs_uri
     
+    def blob_exists(self, gcs_uri: str) -> bool:
+        """Check if a blob exists in GCS."""
+        try:
+            self.validate_gcs_uri(gcs_uri, "blob_exists")
+            
+            # Extract blob name from GCS URI
+            blob_name = gcs_uri.replace(f"gs://{self.path_resolver.bucket_name}/", "")
+            blob = self.bucket.blob(blob_name)
+            
+            return blob.exists()
+        except Exception as e:
+            logger.warning(f"Failed to check blob existence for {gcs_uri}: {e}")
+            return False
+    
     def get_job_storage(self, job_id: str) -> dict:
         """Get storage operations for a specific job."""
         paths = self.path_resolver.get_job_paths(job_id)
