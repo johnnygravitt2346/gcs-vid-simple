@@ -1,0 +1,4 @@
+qid,question,option_a,option_b,option_c,option_d,answer_key,tts_text,bg_key,duration_sec,style_preset
+001,What is the chemical symbol for gold?,Au,Ag,Fe,Cu,A,What is the chemical symbol for gold? The options are A: Au, B: Ag, C: Fe, D: Cu,default,15,modern
+002,Which planet is known as the Red Planet?,Mars,Venus,Jupiter,Saturn,A,Which planet is known as the Red Planet? The options are A: Mars, B: Venus, C: Jupiter, D: Saturn,default,15,modern
+003,What is the largest organ in the human body?,Skin,Heart,Liver,Brain,A,What is the largest organ in the human body? The options are A: Skin, B: Heart, C: Liver, D: Brain,default,15,modern

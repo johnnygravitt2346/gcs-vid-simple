@@ -18,9 +18,11 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 import yaml
-from google.cloud import storage
 from google.cloud import aiplatform
 from google.cloud import texttospeech
+
+from .path_resolver import get_path_resolver
+from .cloud_storage import get_cloud_storage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -64,8 +66,10 @@ class PipelineJob:
 class TriviaFactoryPipeline:
     def __init__(self, config_path: str = "config/config.yaml"):
         self.config = self._load_config(config_path)
-        self.storage_client = storage.Client()
-        self.bucket = self.storage_client.bucket(self.config["storage"]["bucket_name"])
+        
+        # Initialize cloud storage and path resolver
+        self.path_resolver = get_path_resolver()
+        self.cloud_storage = get_cloud_storage()
         
         # Initialize Gemini AI
         aiplatform.init(
@@ -74,7 +78,7 @@ class TriviaFactoryPipeline:
         )
         
         self.active_jobs: Dict[str, PipelineJob] = {}
-        self.job_history: List[PipelineJob] = []
+        self.job_history: List[PipelineJob] = {}
         self.running = True
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
@@ -238,12 +242,13 @@ class TriviaFactoryPipeline:
         await self._save_job_status(job)
     
     async def _save_job_status(self, job: PipelineJob) -> None:
-        """Save job status to GCS."""
+        """Save job status to GCS using cloud storage."""
         try:
-            status_blob = self.bucket.blob(f"jobs/{job.job_id}/status.json")
-            status_blob.upload_from_string(
-                json.dumps(asdict(job), default=str),
-                content_type="application/json"
+            status_uri = self.path_resolver.job_status_uri(job.job_id)
+            self.cloud_storage.write_json_to_gcs(
+                asdict(job), 
+                status_uri, 
+                f"pipeline_save_status_{job.job_id}"
             )
         except Exception as e:
             logger.error(f"Failed to save job status: {e}")

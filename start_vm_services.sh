@@ -18,6 +18,15 @@ fi
 # Load environment variables
 source backend/.env
 
+# Run cloud-only guard script
+echo "🔒 Running cloud-only validation..."
+if ! backend/bin/guard_cloud_only.sh; then
+    echo "❌ Cloud-only validation failed!"
+    echo "Please fix the issues before starting services."
+    exit 1
+fi
+echo "✅ Cloud-only validation passed!"
+
 echo "📋 Configuration:"
 echo "  Project: ${GOOGLE_CLOUD_PROJECT}"
 echo "  Bucket: ${GCS_BUCKET}"
