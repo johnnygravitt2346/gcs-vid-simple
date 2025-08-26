@@ -281,8 +281,8 @@ class GPUWorker:
         try:
             # Lazy import to keep worker startup fast
             sys.path.append("/app/core")
-            from cloud_video_generator import process_job as core_process_job
-            from cloud_video_generator import JobInfo as CoreJobInfo
+            from cloud_video_generator_fixed import process_job as core_process_job
+            from cloud_video_generator_fixed import JobInfo as CoreJobInfo
 
             job_dir = f"{JOBS_PREFIX}/{job.channel}/{job.job_id}"
 
