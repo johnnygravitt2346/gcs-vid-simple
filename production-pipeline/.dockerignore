@@ -1,0 +1,38 @@
+# General
+.git
+**/.git
+**/.gitignore
+**/.DS_Store
+**/__pycache__
+**/*.pyc
+
+# Large/non-essential
+assets/
+output/
+outputs/
+datasets/
+node_modules/
+*.log
+*.mp4
+*.wav
+*.png
+*.jpg
+*.jpeg
+*.mov
+*.zip
+*.tar
+*.tar.gz
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# Python build
+build/
+dist/
+*.egg-info/
+
+# Cache
+.cache/
+.pytest_cache/
+**/.mypy_cache/

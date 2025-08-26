@@ -1,0 +1,12 @@
+# Ignore everything by default
+**
+
+# Allowlist minimal files needed for Cloud Build
+!.gcloudignore
+!cloud-infrastructure/Dockerfile
+!cloud-infrastructure/cloud_worker.py
+!core/**
+!core/requirements.txt
+
+# Keep example scripts if needed (optional)
+!examples/**
