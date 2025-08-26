@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCS Video Automation - Trivia Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .terminal-log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        /* Video player styling */
+        .clip-player video,
+        .final-video-section video {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            aspect-ratio: 16/9;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .video-output {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .clips-section,
+        .final-video-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        .clear-log-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .log-line {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        .progress-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e1e5e9;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .status-text {
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+            margin-top: 10px;
+        }
+        .error {
+            color: #ff4757;
+        }
+        .success {
+            color: #2ed573;
+        }
+        .warning {
+            color: #ffa502;
+        }
+        .info {
+            color: #3742fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 GCS Video Automation</h1>
+            <p>Generate Professional Trivia Videos with AI</p>
+        </div>
+        
+        <div class="main-content">
+            <h2>🚀 Start Video Generation</h2>
+            
+            <form id="generationForm">
+                <div class="form-group">
+                    <label for="geminiApiKey">🔑 Gemini API Key</label>
+                    <input type="password" id="geminiApiKey" name="geminiApiKey" value="AIzaSyC86DvHclKT7_zYmTWcSBnPX6uA3zP7_WE" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelPicker">📺 Channel</label>
+                    <select id="channelPicker" name="channelPicker" required>
+                        <option value="channel-test" selected>channel-test</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="inputMode">📥 Input Mode</label>
+                    <select id="inputMode" name="inputMode" required>
+                        <option value="gemini" selected>Gemini Feeder</option>
+                        <option value="csv">Upload CSV</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="csvUploadGroup" style="display:none;">
+                    <label for="csvFile">📄 Upload CSV</label>
+                    <input type="file" id="csvFile" name="csvFile" accept=".csv" />
+                </div>
+                
+                <div class="form-group" id="numQuestionsGroup">
+                    <label for="numQuestions">📝 How many trivia questions?</label>
+                    <select id="numQuestions" name="numQuestions" required>
+                        <option value="3">3 Questions</option>
+                        <option value="5" selected>5 Questions</option>
+                        <option value="7">7 Questions</option>
+                        <option value="10">10 Questions</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">🎯 Category</label>
+                    <select id="category" name="category" required>
+                        <option value="sports" selected>Sports Trivia</option>
+                        <option value="general_knowledge">General Knowledge</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="geography">Geography</option>
+                        <option value="music">Music</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="art">Art</option>
+                        <option value="literature">Literature</option>
+                        <option value="technology">Technology</option>
+                        <option value="space">Space</option>
+                        <option value="animals">Animals</option>
+                        <option value="food">Food</option>
+                        <option value="travel">Travel</option>
+                        <option value="politics">Politics</option>
+                        <option value="business">Business</option>
+                        <option value="fashion">Fashion</option>
+                    </select>
+                </div>
+                
+                <button type="button" class="btn" id="testBtn">🧪 Test JavaScript</button>
+                <button type="button" class="btn" id="generateBtn">🚀 Generate Trivia Video</button>
+                <button type="button" class="btn" id="cancelBtn" style="display: none;">❌ Cancel Job</button>
+            </form>
+            
+            <div class="terminal-log" id="terminalLog">
+                <div class="terminal-header">
+                    <span>🖥️ Terminal Output</span>
+                    <button type="button" id="clearLogBtn" class="clear-log-btn">Clear Log</button>
+                </div>
+                <div class="terminal-content" id="terminalContent">
+                    <div class="log-line">System ready. Waiting for generation to start...</div>
+                </div>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-text" id="progressText">0% Complete</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-text" id="statusText">Initializing...</div>
+            </div>
+            
+            <!-- Question Review Section -->
+            <div class="question-review" id="questionReview" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3>📝 Review Generated Questions</h3>
+                <p>Review the questions before proceeding to video production:</p>
+                
+                <div class="questions-list" id="questionsList">
+                    <!-- Questions will be populated here -->
+                </div>
+                
+                <div class="review-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn" id="approveQuestionsBtn">
+                        ✅ Approve & Generate Video
+                    </button>
+                    <button type="button" class="btn" id="regenerateQuestionsBtn" style="background: #6c757d;">
+                        🔄 Regenerate Questions
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Video Output Section -->
+            <div class="video-output" id="videoOutput" style="display: none; margin-top: 20px;">
+                <h3>🎬 Video Outputs</h3>
+                
+                <!-- Individual Clips Section -->
+                <div class="clips-section" id="clipsSection">
+                    <h4>🎬 Individual Clips</h4>
+                    <div class="clip-navigation" style="display: flex; align-items: center; margin: 20px 0;">
+                        <button id="prevClipBtn" class="btn">⬅️ Previous</button>
+                        <span id="clipCounter" style="margin: 0 20px;">Clip 1 of 5</span>
+                        <button id="nextClipBtn" class="btn">Next ➡️</button>
+                    </div>
+                    
+                    <div class="clip-player">
+
+                        <video id="clipVideo" controls style="width: 100%; max-width: 800px; height: auto; aspect-ratio: 16/9; margin: 20px 0;">
+                            <source id="clipSource" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div id="clipInfo" style="margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                            <strong>Question:</strong> <span id="clipQuestion"></span><br>
+                            <strong>Answer:</strong> <span id="clipAnswer"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Final Video Section -->
+                <div class="final-video-section" id="finalVideoSection" style="margin-top: 30px;">
+                    <h4>🎬 Final Video (with Intro/Outro)</h4>
+
+                    <video id="finalVideo" controls style="width: 100%; max-width: 800px; height: auto; aspect-ratio: 16/9; margin: 20px 0;">
+                        <source id="finalVideoSource" src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div id="finalVideoInfo" style="margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <strong>Final Video:</strong> Complete trivia video with intro and outro
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+        // Simple logging function
+        function addLogLine(message, type = 'info') {
+            const terminalContent = document.getElementById('terminalContent');
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            terminalContent.appendChild(logLine);
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+        
+        // Clear log function
+        document.getElementById('clearLogBtn').onclick = function() {
+            document.getElementById('terminalContent').innerHTML = '';
+            addLogLine('Log cleared', 'info');
+        };
+        
+        // Test button
+        document.getElementById('testBtn').onclick = function() {
+            console.log('Test button clicked!');
+            addLogLine('🧪 Test button clicked - JavaScript is working!', 'info');
+            alert('JavaScript is working! 🎉');
+        };
+        
+        // Generate button
+        document.getElementById('generateBtn').onclick = async function() {
+            console.log('Generate button clicked!');
+            addLogLine('🚀 Starting video generation...', 'info');
+            
+            // Get form data
+            const numQuestions = document.getElementById('numQuestions').value;
+            const category = document.getElementById('category').value;
+            const channelId = document.getElementById('channelPicker').value;
+            const mode = document.getElementById('inputMode').value;
+            const geminiApiKey = document.getElementById('geminiApiKey').value;
+            
+            addLogLine(`Channel: ${channelId}`, 'info');
+            addLogLine(`Input Mode: ${mode}`, 'info');
+            addLogLine(`Questions: ${numQuestions}`, 'info');
+            addLogLine(`Category: ${category}`, 'info');
+            addLogLine(`API Key: ${geminiApiKey ? '✅ Set' : '❌ Missing'}`, 'info');
+            
+            // Show progress
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressFill').style.width = '10%';
+            document.getElementById('statusText').textContent = 'Preparing request...';
+            
+            try {
+                addLogLine('🚀 Sending generation request to server...', 'info');
+                
+                const requestBody = {
+                    num_questions: parseInt(numQuestions),
+                    category: category,
+                    channel_id: channelId,
+                    input_mode: mode,
+                    gemini_api_key: geminiApiKey
+                };
+                
+                addLogLine(`📤 Request payload: ${JSON.stringify(requestBody)}`, 'info');
+                
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                addLogLine(`📥 Response status: ${response.status}`, 'info');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addLogLine('✅ Generation request accepted. Job ID: ' + data.job_id, 'info');
+                    addLogLine('🤖 Gemini is generating questions...', 'info');
+                    document.getElementById('progressFill').style.width = '20%';
+                    document.getElementById('statusText').textContent = 'Questions being generated...';
+                    
+                    // Set up Socket.IO listener for real-time updates
+                    if (typeof io !== 'undefined') {
+                        const socket = io();
+                        socket.on('job_update', function(data) {
+                            if (data.job_id === window.currentJobId) {
+                                addLogLine(`📊 Progress ${data.progress || 0}%: ${data.current_step}`, 'info');
+                                if (data.progress) {
+                                    document.getElementById('progressFill').style.width = data.progress + '%';
+                                    document.getElementById('progressText').textContent = data.progress + '% Complete';
+                                }
+                                if (data.current_step) {
+                                    document.getElementById('statusText').textContent = data.current_step;
+                                }
+                                
+                                // Check if questions are ready for review
+                                if (data.questions && data.questions.length > 0) {
+                                    showQuestionReview(data.questions);
+                                }
+                                
+                                // Check if job is completed
+                                if (data.status === 'completed') {
+                                    showVideoOutputs(data);
+                                }
+                            }
+                        });
+                        window.currentJobId = data.job_id;
+                    }
+                } else {
+                    addLogLine(`❌ Generation failed: ${data.error}`, 'error');
+                    document.getElementById('progressContainer').style.display = 'none';
+                }
+            } catch (error) {
+                addLogLine(`❌ Error: ${error.message}`, 'error');
+                console.error('Generation error:', error);
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        };
+        
+        // Input mode toggle
+        document.getElementById('inputMode').onchange = function() {
+            const mode = this.value;
+            const csvGroup = document.getElementById('csvUploadGroup');
+            const numQuestionsGroup = document.getElementById('numQuestionsGroup');
+            
+            if (mode === 'csv') {
+                csvGroup.style.display = 'block';
+                numQuestionsGroup.style.display = 'none';
+            } else {
+                csvGroup.style.display = 'none';
+                numQuestionsGroup.style.display = 'block';
+            }
+        };
+        
+        // Question review functionality
+        function showQuestionReview(questions) {
+            addLogLine(`📝 ${questions.length} questions ready for review`, 'info');
+            
+            const reviewSection = document.getElementById('questionReview');
+            const questionsList = document.getElementById('questionsList');
+            
+            // Clear previous questions
+            questionsList.innerHTML = '';
+            
+            // Display each question
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.style.cssText = 'background: white; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 15px;';
+                questionDiv.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #333;">Question ${index + 1}</h4>
+                    <div style="font-weight: 500; margin-bottom: 8px;">${q.question}</div>
+                    <div style="margin: 8px 0;">
+                        <div style="padding: 5px 0; color: #666;">A) ${q.options[0]}</div>
+                        <div style="padding: 5px 0; color: #666;">B) ${q.options[1]}</div>
+                        <div style="padding: 5px 0; color: #666;">C) ${q.options[2]}</div>
+                        <div style="padding: 5px 0; color: #666;">D) ${q.options[3]}</div>
+                    </div>
+                    <div style="color: #28a745; font-weight: 600;">Correct Answer: ${q.correct_answer}</div>
+                `;
+                questionsList.appendChild(questionDiv);
+            });
+            
+            // Show review section and hide progress
+            reviewSection.style.display = 'block';
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+        
+        // Clip navigation variables
+        let currentClipIndex = 0;
+        let clips = [];
+        
+                // Show video outputs
+        function showVideoOutputs(data) {
+            addLogLine('🎬 Video generation completed!', 'info');
+            document.getElementById('videoOutput').style.display = 'block';
+            document.getElementById('questionReview').style.display = 'none';
+            
+            // Initialize clip navigation
+            initClipNavigation();
+            
+            // Load clips and final video from the completed job
+            loadClips(data);
+            
+            // Set the final video source if we have the output path
+            if (data.output_path) {
+                const finalVideoSource = document.getElementById('finalVideoSource');
+                const finalVideo = document.getElementById('finalVideo');
+                
+                // Use signed URL if available, otherwise try direct GCS URL
+                let videoUrl;
+                if (data.signed_url) {
+                    videoUrl = data.signed_url;
+                    addLogLine(`🎥 Using signed URL for video`, 'info');
+                } else {
+                    // Fallback to direct GCS URL (may not work due to permissions)
+                    videoUrl = `https://storage.googleapis.com/trivia-automations-2/${data.output_path}`;
+                    addLogLine(`🎥 Using direct GCS URL (may not work due to permissions)`, 'warning');
+                }
+                
+                finalVideoSource.src = videoUrl;
+                finalVideo.load();
+                
+                addLogLine(`🎥 Final video loaded: ${data.output_path}`, 'info');
+                
+                // Test if the video URL is accessible
+                fetch(videoUrl, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            addLogLine(`✅ Video URL is accessible (Status: ${response.status})`, 'success');
+                            document.getElementById('accessTestStatus').innerHTML = `✅ Accessible (${response.status})`;
+                        } else {
+                            addLogLine(`⚠️ Video URL returned status: ${response.status}`, 'warning');
+                            document.getElementById('accessTestStatus').innerHTML = `⚠️ Status ${response.status}`;
+                        }
+                    })
+                    .catch(error => {
+                        addLogLine(`❌ Video URL test failed: ${error.message}`, 'error');
+                        document.getElementById('accessTestStatus').innerHTML = `❌ Failed: ${error.message}`;
+                    });
+                
+                // Show final video info
+                const finalVideoInfo = document.getElementById('finalVideoInfo');
+                finalVideoInfo.innerHTML = `
+                    <strong>Final Video Generated Successfully!</strong><br>
+                    <strong>GCS Path:</strong> ${data.output_path}<br>
+                    <strong>Video URL:</strong> <a href="${videoUrl}" target="_blank">View Video</a><br>
+                    <strong>Status:</strong> ${data.signed_url ? '✅ Signed URL (should work)' : '⚠️ Direct URL (may not work)'}<br>
+                    <strong>Access Test:</strong> <span id="accessTestStatus">Testing...</span>
+                `;
+            }
+        }
+        
+        // Initialize clip navigation
+        function initClipNavigation() {
+            document.getElementById('prevClipBtn').onclick = function() {
+                if (currentClipIndex > 0) {
+                    currentClipIndex--;
+                    showClip(currentClipIndex);
+                }
+            };
+            
+            document.getElementById('nextClipBtn').onclick = function() {
+                if (currentClipIndex < clips.length - 1) {
+                    currentClipIndex++;
+                    showClip(currentClipIndex);
+                }
+            };
+        }
+        
+        // Show a specific clip
+        function showClip(index) {
+            if (index >= 0 && index < clips.length) {
+                const clip = clips[index];
+                document.getElementById('clipSource').src = clip.video_url || '';
+                document.getElementById('clipVideo').load();
+                document.getElementById('clipQuestion').textContent = clip.question || 'N/A';
+                document.getElementById('clipAnswer').textContent = clip.answer || 'N/A';
+                document.getElementById('clipCounter').textContent = `Clip ${index + 1} of ${clips.length}`;
+                
+                updateClipNavigation();
+            }
+        }
+        
+        // Update clip navigation buttons
+        function updateClipNavigation() {
+            document.getElementById('prevClipBtn').disabled = currentClipIndex <= 0;
+            document.getElementById('nextClipBtn').disabled = currentClipIndex >= clips.length - 1;
+        }
+        
+        // Load clips from backend data
+        function loadClips(data) {
+            // For now, we'll show a message that individual clips are available
+            // The actual clip data would need to be sent from the backend
+            clips = [];
+            
+            // Show message about clips
+            const clipsSection = document.getElementById('clipsSection');
+            if (clipsSection) {
+                clipsSection.innerHTML = `
+                    <h4>🎬 Individual Clips</h4>
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <p>Individual question clips have been generated and are available in the output directory.</p>
+                        <p><strong>Job ID:</strong> ${data.job_id || 'Unknown'}</p>
+                        <p><strong>Channel:</strong> ${data.channel || 'Unknown'}</p>
+                    </div>
+                `;
+            }
+            
+            // Hide clip navigation since we don't have individual clips loaded
+            const clipNavigation = document.querySelector('.clip-navigation');
+            if (clipNavigation) {
+                clipNavigation.style.display = 'none';
+            }
+        }
+        
+        // Question approval button
+        document.getElementById('approveQuestionsBtn').onclick = function() {
+            addLogLine('✅ Questions approved. Proceeding to video generation...', 'info');
+            document.getElementById('questionReview').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'block';
+            
+            // Send approval to server to continue with video generation
+            if (typeof io !== 'undefined') {
+                const socket = io();
+                socket.emit('approve_questions', { job_id: window.currentJobId });
+            }
+        };
+        
+        // Question regeneration button
+        document.getElementById('regenerateQuestionsBtn').onclick = function() {
+            addLogLine('🔄 Regenerating questions...', 'info');
+            document.getElementById('questionReview').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'block';
+            
+            // Send regeneration request to server
+            if (typeof io !== 'undefined') {
+                const socket = io();
+                socket.emit('regenerate_questions', { job_id: window.currentJobId });
+            }
+        };
+        
+        // Initialize
+        addLogLine('📡 System initialized and ready!', 'info');
+        
+
+        console.log('✅ Simple working version loaded!');
+    </script>
+</body>
+</html>

@@ -18,36 +18,56 @@ logger = logging.getLogger(__name__)
 class PathResolver:
     """Resolves all paths for the Trivia Factory pipeline."""
     
-    def __init__(self, channel_id_override: Optional[str] = None):
+    def __init__(self):
         """Initialize path resolver with environment validation."""
         self._validate_environment()
-        self._setup_paths(channel_id_override)
+        self._setup_paths()
         self._validate_scratch_directory()
     
     def _validate_environment(self):
         """Validate all required environment variables are present."""
-        # Use hardcoded values for web interface compatibility
-        self.project_id = "mythic-groove-469801-b7"  # Default project
-        self.bucket_name = "trivia-automations-2"     # Default bucket from project memory
-        self.channel_id = "channel-test"              # Default channel
+        required_vars = [
+            "GOOGLE_CLOUD_PROJECT",
+            "GCS_BUCKET", 
+            "CHANNEL_ID"
+        ]
         
-        # Don't require environment variables for web interface
-        return
+        missing_vars = []
+        for var in required_vars:
+            if not os.getenv(var):
+                missing_vars.append(var)
+        
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {missing_vars}")
+        
+        # Validate GCS bucket format
+        bucket = os.getenv("GCS_BUCKET")
+        if not bucket or bucket.startswith(("file://", "/", "~")):
+            raise ValueError(f"Invalid GCS bucket: {bucket}. Must be a valid bucket name.")
     
-    def _setup_paths(self, channel_id_override: Optional[str] = None):
+    def _setup_paths(self):
         """Setup all path configurations from environment."""
-        # Use hardcoded values for web interface compatibility
-        self.project_id = self.project_id or "mythic-groove-469801-b7"
-        self.bucket_name = self.bucket_name or "trivia-automations-2"
-        self.channel_id = channel_id_override or self.channel_id or "channel-test"
+        self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+        self.bucket_name = os.getenv("GCS_BUCKET")
+        self.channel_id = os.getenv("CHANNEL_ID")
         
-        # Use hardcoded bucket structure for web interface
-        self.parent_bucket = "trivia-automations-2"
-        self.channels_folder = "channels"
-        self.dev_folder = "dev"
-        self.shared_folder = "shared"
-        self.system_folder = "system"
-        self.default_content_type = "trivia"
+        # Load config for new bucket structure
+        try:
+            config_path = Path(__file__).parent.parent / "config" / "config.yaml"
+            with open(config_path, 'r') as f:
+                import yaml
+                config = yaml.safe_load(f)
+                storage_config = config.get('storage', {})
+        except Exception:
+            storage_config = {}
+        
+        # Use new clean bucket structure if available, fallback to legacy
+        self.parent_bucket = storage_config.get('parent_bucket', self.bucket_name)
+        self.channels_folder = storage_config.get('channels_folder', 'channels')
+        self.dev_folder = storage_config.get('dev_folder', 'dev')
+        self.shared_folder = storage_config.get('shared_folder', 'shared')
+        self.system_folder = storage_config.get('system_folder', 'system')
+        self.default_content_type = storage_config.get('default_content_type', 'trivia')
         
         # GCS base paths - clean structure
         self.gcs_base = f"gs://{self.parent_bucket}"
@@ -86,38 +106,9 @@ class PathResolver:
         if not os.path.exists(gce_metadata):
             logger.warning("Not running on GCE - this may be a development environment")
     
-    # ---------------- New channel-first URIs ----------------
-    def feeds_csv_input_uri(self) -> str:
-        """GCS URI for CSV uploads for this channel."""
-        return f"{self.gcs_channels}/{self.default_content_type}/feeds/csv_input"
-
-    def feeds_gemini_input_uri(self) -> str:
-        """GCS URI for Gemini-generated datasets for this channel."""
-        return f"{self.gcs_channels}/{self.default_content_type}/feeds/gemini_input"
-
-    def canonical_latest_csv_uri(self) -> str:
-        """Canonical latest dataset CSV for this channel (always the generator input)."""
-        return f"{self.gcs_channels}/{self.default_content_type}/feeds/latest.csv"
-
-    def outputs_root_uri(self) -> str:
-        """Root outputs folder for this channel."""
-        return f"{self.gcs_channels}/{self.default_content_type}/outputs"
-
-    def outputs_final_uri(self) -> str:
-        """Final video location (deterministic)."""
-        return f"{self.outputs_root_uri()}/final/final_video.mp4"
-
-    def outputs_clips_uri(self) -> str:
-        """Individual clips folder."""
-        return f"{self.outputs_root_uri()}/individual_clips"
-
-    def archive_root_uri(self) -> str:
-        """Archive root for timestamped run snapshots."""
-        return f"{self.gcs_channels}/{self.default_content_type}/archive"
-
-    def archive_run_uri(self, run_id: str) -> str:
-        """Archive path for a specific run id/timestamp."""
-        return f"{self.archive_root_uri()}/{run_id}"
+    def templates_uri(self) -> str:
+        """Get GCS URI for channel templates."""
+        return f"{self.gcs_channels}/templates"
     
     def job_working_uri(self, job_id: str) -> str:
         """Get GCS URI for job working directory."""
@@ -267,8 +258,3 @@ def get_path_resolver() -> PathResolver:
     if path_resolver is None:
         path_resolver = PathResolver()
     return path_resolver
-
-
-def get_path_resolver_for_channel(channel_id: str) -> PathResolver:
-    """Create a new PathResolver instance for a specific channel id."""
-    return PathResolver(channel_id_override=channel_id)

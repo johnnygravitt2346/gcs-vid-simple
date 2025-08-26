@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/mythic-groove-469801-b7/gpu-video-worker:latest', '-f', 'cloud-infrastructure/Dockerfile', '.']
+images:
+  - 'gcr.io/mythic-groove-469801-b7/gpu-video-worker:latest'

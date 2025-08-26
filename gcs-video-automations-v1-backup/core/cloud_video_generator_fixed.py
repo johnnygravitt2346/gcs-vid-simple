@@ -730,14 +730,15 @@ def process_job(job_info: JobInfo) -> str:
     normalize_clip_for_concat(intro_raw, intro_normalized, 1920, 1080)
     normalize_clip_for_concat(outro_raw, outro_normalized, 1920, 1080)
     
-    # PRODUCTION MODE: Process ALL trivia clips dynamically
-    print(f"🎬 PRODUCTION MODE: Processing all {len(indiv_paths)} trivia clips")
+    # TEST MODE: Process only the first trivia clip for faster debugging
+    print("🧪 TEST MODE: Processing only first trivia clip for faster debugging")
+    test_clips = [indiv_paths[0]] if indiv_paths else []
     
-    # Final concatenation: Intro + ALL Trivia Clips + Outro
-    final_order = [intro_normalized] + indiv_paths + [outro_normalized]
+    # Final concatenation: Intro + Single Test Clip + Outro
+    final_order = [intro_normalized] + test_clips + [outro_normalized]
     final_out = os.path.join(out_dir, "final_video.mp4")
     
-    print(f"🎬 Final concatenation: {len(final_order)} clips (Intro + {len(indiv_paths)} Trivia + Outro)")
+    print(f"🎬 Final concatenation: {len(final_order)} clips (TEST MODE)")
     concat_many_ordered(final_order, final_out)
     
     # Upload final video to GCS
